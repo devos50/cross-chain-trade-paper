@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{todonotes}
+
+\title{Quick and Efficient Cross-chain Asset Exchange using Multi-signature Transactions and Witnesses}
+\author{Martijn de Vos}
+\date{April 2021}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+TODO introduce topic
+
+A common approach to exchange assets residing on different blockchains is by using \emph{atomic swaps}~\cite{herlihy2018atomic}.
+An atomic swap is a coordination task where assets are either exchanged between parties or nothing happens.
+This makes it a relatively secure mechanism to trade values across isolated blockchain environments.
+The \enquote{traditional} atomic swap between two parties, Alice and Bob, uses hash-lock and time-lock transaction primitives to refund assets to one of the trading parties when the counterparty becomes inactive.
+
+While atomic swaps seem to be the standard approach for cross-chain asset exchange without trusted intermediary (and also are foundational for many layer-two solutions~\cite{gudgeon2019sok}), this approach has deficiencies for the involved parties.
+First, not all blockchain have native support for atomic swaps, and some protocols do not support hash- or time-locks.
+Second, recent work shows that atomic swaps are susceptible for collusion with the operators of the involved blockchains~\cite{tsabary2020mad}.
+In particular, a malicious user can bribe a miner to ignore the claim transaction of the counterparty, effectively confiscating their funds.
+Third, atomic swaps are proven to be unfair for one of the parties since it effectively provides the counterparty with a free option and freely speculate on the price of an asset being traded~\cite{han2019optionality}.
+
+In this work, we describe an alternative approach for quick and efficient exchange of value between different blockchains.
+Our approach orients around multi-signature transactions and requires witnesses to digitally sign transactions associated with a particular trade to enforce its atomicity.
+A key advantage is that the majority of the computations required by our system do not involve expensive on-chain transactions but are instead off-chain, performed by users themselves.
+By leveraging a lightweight accountability mechanism, we enable any participant to detect and prove the wrongdoings of a trader or witness, resulting in quick community exclusion.\todo{finish + add numbers}
+
+\section{Problem Description}
+This work focusses on the problem of two users wanting to securely exchange assets between different blockchain platforms.
+Assume, for example, that Alice wants to buy Bitcoin for Ethereum while Bob wants to sell his Ethereum for Bitcoin.
+Furthermore, assume that Alice and Bob have no prior trust relation (e.g., they do not know each others real-world identity).
+Then, these two users reach an agreement to trade (e.g., containing the pricing information of the assets to be traded) and the process of exchanging assets, or \emph{settlement} can start.
+A naive approach is to have both Alice and Bob issue a transaction where they transfer the agreed amounts of assets to the counterparty.
+We refer to the transaction issued by Alice as $ tx_a $ and the transaction of Bob as $ tx_b $.
+This unsupervised process, however, is risky: Alice or Bob can refrain from issuing the transaction, possibly resulting in a net loss for one of the parties.
+The objective of an atomic swap is to prevent this exact situations: one transaction cannot complete without the other going through.
+
+To address the lack of trust between traders, it is common to use a trusted intermediary, e.g., a cryptocurrency exchange, to process the trade.
+The popularity of blockchain technology and different decentralized applications has resulted in the deployment of many cryptocurrency exchanges, some of them processing millions worth of transactions daily.
+This approach requires Alice and Bob to trust that the intermediary correctly completes the trade and does not default or comprise the incoming assets.\todo{finish}
+For an overview of state-of-the-art cross-chain trading mechanisms, we refer to reader to our prior work~\cite{de2021xchange}.\todo{list trust assumptions for each trading mechanism?}
+
+As such, the overarching research question of this work is as follows: \emph{how can two users securely exchange assets between isolated blockchain platforms?}
+
+\section{Efficient Asset Exchange using Witnesses}
+We present an efficient approach to enable cross-chain asset exchange by leveraging multi-signature transactions and signature thresholds.
+For presentation clarity, we first focus on permissioned networks where the identity of every user is well-established.
+
+\section{Related Work}
+TODO
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
