@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 \usepackage{todonotes}
+\usepackage{graphicx}
 
 \title{Quick and Efficient Cross-chain Asset Exchange using Multi-signature Transactions and Witnesses}
 \author{Martijn de Vos}
@@ -28,6 +29,7 @@ Third, atomic swaps are proven to be unfair for one of the parties since it effe
 In this work, we describe an alternative approach for quick and efficient exchange of value between different blockchains.
 Our approach orients around multi-signature transactions and requires witnesses to digitally sign transactions associated with a particular trade to enforce its atomicity.
 A key advantage is that the majority of the computations required by our system do not involve expensive on-chain transactions but are instead off-chain, performed by users themselves.
+This significantly increases efficiency and throughput of our approach, requiring minimal interaction with the blockchains.
 By leveraging a lightweight accountability mechanism, we enable any participant to detect and prove the wrongdoings of a trader or witness, resulting in quick community exclusion.\todo{finish + add numbers}
 
 \section{Problem Description}
@@ -35,7 +37,7 @@ This work focusses on the problem of two users wanting to securely exchange asse
 Assume, for example, that Alice wants to buy Bitcoin for Ethereum while Bob wants to sell his Ethereum for Bitcoin.
 Furthermore, assume that Alice and Bob have no prior trust relation (e.g., they do not know each others real-world identity).
 Then, these two users reach an agreement to trade (e.g., containing the pricing information of the assets to be traded) and the process of exchanging assets, or \emph{settlement} can start.
-A naive approach is to have both Alice and Bob issue a transaction where they transfer the agreed amounts of assets to the counterparty.
+A naive approach is to have both Alice and Bob issue a Bitcoin and Ethereum transaction respectively where they transfer the agreed amounts of assets to the counterparty.
 We refer to the transaction issued by Alice as $ tx_a $ and the transaction of Bob as $ tx_b $.
 This unsupervised process, however, is risky: Alice or Bob can refrain from issuing the transaction, possibly resulting in a net loss for one of the parties.
 The objective of an atomic swap is to prevent this exact situations: one transaction cannot complete without the other going through.
@@ -45,14 +47,59 @@ The popularity of blockchain technology and different decentralized applications
 This approach requires Alice and Bob to trust that the intermediary correctly completes the trade and does not default or comprise the incoming assets.\todo{finish}
 For an overview of state-of-the-art cross-chain trading mechanisms, we refer to reader to our prior work~\cite{de2021xchange}.\todo{list trust assumptions for each trading mechanism?}
 
-As such, the overarching research question of this work is as follows: \emph{how can two users securely exchange assets between isolated blockchain platforms?}
+As such, the overarching research question of this work is as follows: \emph{how can two users securely exchange assets between isolated blockchain platforms without involvement of a trusted intermediary?}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.7\linewidth]{assets/trade_with_witnesses}
+	\caption{A trade between Alice ($a$) and Bob ($ b $), assisted by $ n $ witnesses ($ w_1 \dots w_n) $. The issued transactions by Alice and Bob ($ tx_a $ and $ tx_b $, respectively) are signed by the involved witnesses.}
+	\label{fig:trade_with_witnesses}
+\end{figure}
 
 \section{Efficient Asset Exchange using Witnesses}
 We present an efficient approach to enable cross-chain asset exchange by leveraging multi-signature transactions and signature thresholds.
 For presentation clarity, we first focus on permissioned networks where the identity of every user is well-established.
+Our main idea is to have one or more witnesses that co-sign the transactions issued by two users that are exchanging assets.
+This idea is visualized in Figure~\ref{fig:trade_with_witnesses}, showing a trade between Alice and Bob.
+Both Alice and Bob issue a transaction that transfers assets to the counterparty (denoted as $ tx_a $ and $ tx_b $, respectively), but each transaction also has to be signed by one or more witnesses for inclusion in the blockchain.
+We refer to the set of all witnesses in the network as $ W $, and the witnesses required to co-sign a transaction in trade $ T $ as $ W_T $.
+The function $ V(\cdot) $ takes a transaction as input and outputs 1 if the transaction has enough signatures for its execution, and 0 otherwise.
+This approach resembles a trade coordinated by a trusted escrow where the signature of the escrow is decisive to complete the trade.
+However, we aim to avoid the need for a trusted party when trading.
+Instead, we ask random users in the network to act as witness, therefore sidestepping the need for a singular trusted escrow.
+
+The approach as depicted in Figure~\ref{fig:trade_with_witnesses} prevents Alice or Bob from \enquote{stealing} assets from the other party.
+The main risk of our approach, however, is \emph{collusion} where one party secretly collaborates with a subset of witnesses to compromise assets.
+This would work as follows: assume that Alice colludes with the witnesses that are co-signing the transactions of one of her trades.
+She can now compromise Bobs' assets by having the witnesses refrain from signing $ tx_a $ while having the witnesses sign $ tx_b $.
+As such, Bobs' assets would be transferred to Alice while Alice effectively retains control over her funds since $ tx_a $ will not be executed.
+
+At this point, we have to answer the following two questions:
+\begin{enumerate}
+	\item How is $ W $ determined for each trade?
+	\item How many signatures are required for a transaction to be satisfied?
+\end{enumerate}
+
+\subsection{Selecting Witnesses}
+TODO\todo{write}
+
+\subsection{Signature Thresholds}
+The second question to answer is how many signatures are required for a particular transaction to be included on the involved blockchain.
+First, we analyse the situation where the signatures of all witnesses are required for a transaction to be executed.
+Assume a trade between Alice and Bob using four witnesses ($ n = 4 $), and that Alice is colluding with one or more witnesses whereas Bob is honest.
+Now, if Alice colludes with a single witness, she can direct the witness to refrain from signing $ tx_a $ while signing $ tx_b $, effectively leaving Bob with an economic loss.
+As such, $n$-out-of-$n$ signatures are particularly vulnerable for collusion.
+Specifically, if we assume random witness selection, and that Alice is colluding with fraction $ f $ of the network, the probability that $ tx_a $ will not be executed while $ tx_b $ can be modelled as a Bernoulli trial:\todo{derive}
+
+% Idea: witnesses should not sign without having seen both transactions
+% We can devise an accountable MPC multi-sig computation.
+% Weaken the assumption of full network knowledge by having both parties propose a few witnesses. Parties try their best to check if these witnesses are 'secure' enough.
 
 \section{Related Work}
-TODO
+Bisq is a non-custodial and peer-to-peer trading network that uses multi-signature transactions as part of the settlement procedure~\cite{bisq}.
+In case of a dispute between traders, a mediator is assigned that makes a suggestion on how to resolve the dispute.
+When mediation is insufficient, Bisq relies on an arbitrator that is capable of redirecting funds to a wallet owned by the Bisq escrow.
+The arbitrator then decides which party is right and reimburses it.
 
 \bibliographystyle{plain}
 \bibliography{references}
