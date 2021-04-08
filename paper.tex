@@ -2,7 +2,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 \usepackage{todonotes}
+\usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{subcaption}
 
 \title{Quick and Efficient Cross-chain Asset Exchange using Multi-signature Transactions and Witnesses}
 \author{Martijn de Vos}
@@ -56,6 +58,16 @@ As such, the overarching research question of this work is as follows: \emph{how
 	\label{fig:trade_with_witnesses}
 \end{figure}
 
+\section{System and Threat Model}
+
+\subsection{System Model}
+We assume well-established membership.
+This means that the digital identity of each peer in the network is tied to a real-world identity, e.g., through a certification by a trusted party.
+This assumptions is required to address the Sybil Attack, the situation where an adversary subverts the network by creating many identities or by rejoining the network under a different identity~\cite{douceur2002sybil}.
+
+\subsection{Threat Model}
+TODO\todo{write}
+
 \section{Efficient Asset Exchange using Witnesses}
 We present an efficient approach to enable cross-chain asset exchange by leveraging multi-signature transactions and signature thresholds.
 For presentation clarity, we first focus on permissioned networks where the identity of every user is well-established.
@@ -69,31 +81,92 @@ However, we aim to avoid the need for a trusted party when trading.
 Instead, we ask random users in the network to act as witness, therefore sidestepping the need for a singular trusted escrow.
 
 The approach as depicted in Figure~\ref{fig:trade_with_witnesses} prevents Alice or Bob from \enquote{stealing} assets from the other party.
-The main risk of our approach, however, is \emph{collusion} where one party secretly collaborates with a subset of witnesses to compromise assets.
-This would work as follows: assume that Alice colludes with the witnesses that are co-signing the transactions of one of her trades.
+In addition, witnesses are not able to compromise assets since they are not in possession of the funds being transferred at any point during the trade as would be the case with escrow-based asset trade.
+A dispute would arise if either $ tx_a $ goes through and $ tx_b $ does not go through, or vice versa.
+Achieving this would require \emph{collusion} with witnesses where one trading party secretly collaborates with a subset of witnesses to compromise assets.
+This collusion would work as follows: assume that Alice colludes with the witnesses that are co-signing the transactions of one of her trades.
 She can now compromise Bobs' assets by having the witnesses refrain from signing $ tx_a $ while having the witnesses sign $ tx_b $.
 As such, Bobs' assets would be transferred to Alice while Alice effectively retains control over her funds since $ tx_a $ will not be executed.
 
 At this point, we have to answer the following two questions:
 \begin{enumerate}
-	\item How is $ W $ determined for each trade?
+	\item How is the set of witnesses ($ W_T $) determined for each trade $ T $?
 	\item How many signatures are required for a transaction to be satisfied?
 \end{enumerate}
 
 \subsection{Selecting Witnesses}
 TODO\todo{write}
 
+\begin{figure*}[t]
+       \centering
+       \begin{subfigure}[t]{.5\textwidth}
+               \centering
+               \captionsetup{width=.9\linewidth}
+               \includegraphics[width=.9\linewidth]{assets/fraud_probability_n_out_of_n.pdf}
+               \caption{Using $n$-out-of-$n$ signatures.}
+               \label{fig:prob_fraud_n_out_of_n_signatures}
+       \end{subfigure}%
+       \begin{subfigure}[t]{.5\textwidth}
+               \centering
+               \captionsetup{width=.9\linewidth}
+               \includegraphics[width=.9\linewidth]{assets/fraud_probability_1_out_of_n.pdf}
+               \caption{Using $1$-out-of-$n$ signatures.}
+               \label{fig:prob_fraud_1_out_of_n_signatures}
+       \end{subfigure}%
+       \caption{The probabilities of Alice successfully committing fraud, for n-out-of-n and 1-out-of-n threshold signatures.}
+       \label{fig:prob_fraud_signatures}
+\end{figure*}
+
 \subsection{Signature Thresholds}
 The second question to answer is how many signatures are required for a particular transaction to be included on the involved blockchain.
+
+\textbf{$n$-out-of-$n$ threshold.}
 First, we analyse the situation where the signatures of all witnesses are required for a transaction to be executed.
 Assume a trade between Alice and Bob using four witnesses ($ n = 4 $), and that Alice is colluding with one or more witnesses whereas Bob is honest.
 Now, if Alice colludes with a single witness, she can direct the witness to refrain from signing $ tx_a $ while signing $ tx_b $, effectively leaving Bob with an economic loss.
 As such, $n$-out-of-$n$ signatures are particularly vulnerable for collusion.
-Specifically, if we assume random witness selection, and that Alice is colluding with fraction $ f $ of the network, the probability that $ tx_a $ will not be executed while $ tx_b $ can be modelled as a Bernoulli trial:\todo{derive}
+Specifically, if we assume random witness selection, and that Alice is colluding with fraction $ f $ of all witnesses in the network, the probability that $ tx_a $ will not be executed while $ tx_b $ can be modelled as follows:\todo{derive}
+
+\begin{equation}
+	\begin{aligned}
+	P(V(tx_a) = 0 \cap V(tx_b) = 1) & = P(V(tx_a) = 0)\\
+	& = 1 - P(V(tx_a) = 1)\\
+	& = 1 - (1 - f)^n
+	\end{aligned}
+\end{equation}
+
+Note that we have assumed that Bob is honest and thus does not collude with any witness.
+Therefore, $ P(V(tx_b) = 1) = 1 $ since both honest witnesses and witnesses colluding with Alice will sign for $ tx_b $.
+If Alice colludes with 50\% of all witnesses, and each trade requires 5 witnesses, her fraud has a likelihood of ~96.9\% to succeed.
+Specifically, Alice only requires collusion with only a single witness for her attack to succeed.
+We have also plotted these probabilities in Figure~\ref{fig:prob_fraud_n_out_of_n_signatures}.
+This figures shows that the probability of Alice committing fraud quickly increases for larger values of $ n $ and $ f $.
+It also shows that it is preferred to utilize a low number of witnesses.
+
+\textbf{$1$-out-of-$n$ threshold.}
+If instead we assume an $1$-out-of-$n$ threshold scheme, it is required that Alice colludes with all witnesses of a trade.
+The probability of her succeeding with $ n $ witnesses is modelled as followed:
+
+\begin{equation}
+	P(V(tx_a) = 0) = f^n
+\end{equation}
+
+The probability of Alice succeeding her fraud quickly decreases: even when Alice colludes with 50\% of all witnesses, requiring 5 witnesses for each trade already reduces her chance of succeeding to ~3.1\%.
+We have visualized these probabilities in Figure~\ref{fig:prob_fraud_n_out_of_n_signatures}.
+As opposed to the probabilities under the $n$-out-of-$n$ threshold scheme, we now see that we can keep the probability of Alice successfully committing fraud lower when we include more witnesses in our transactions.
+
+While this scheme at a first glance might seem robust, the above scheme assumes that both traders actually generate .
+Without this assumption, there is a race condition here that would easily result in Alice committing fraud.
+In particular, if Bob issues his transaction $tx_b$ (without any witness signatures) in the network first, and Alice colludes with a single witness, that single witness can sign $ tx_b $ and submit it to the blockchain network for execution.
+Now, Alice refrains from sending out her transaction $tx_a$.
+In this scenario, she has successfully compromised Bobs' assets.
 
 % Idea: witnesses should not sign without having seen both transactions
 % We can devise an accountable MPC multi-sig computation.
 % Weaken the assumption of full network knowledge by having both parties propose a few witnesses. Parties try their best to check if these witnesses are 'secure' enough.
+
+\section{Making Witnesses Liable with Accountability}
+TODO
 
 \section{Related Work}
 Bisq is a non-custodial and peer-to-peer trading network that uses multi-signature transactions as part of the settlement procedure~\cite{bisq}.
