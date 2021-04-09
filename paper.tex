@@ -4,6 +4,7 @@
 \usepackage{todonotes}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{relsize}
 \usepackage{subcaption}
 
 \title{Quick and Efficient Cross-chain Asset Exchange using Multi-signature Transactions and Witnesses}
@@ -125,7 +126,7 @@ First, we analyse the situation where the signatures of all witnesses are requir
 Assume a trade between Alice and Bob using four witnesses ($ n = 4 $), and that Alice is colluding with one or more witnesses whereas Bob is honest.
 Now, if Alice colludes with a single witness, she can direct the witness to refrain from signing $ tx_a $ while signing $ tx_b $, effectively leaving Bob with an economic loss.
 As such, $n$-out-of-$n$ signatures are particularly vulnerable for collusion.
-Specifically, if we assume random witness selection, and that Alice is colluding with fraction $ f $ of all witnesses in the network, the probability that $ tx_a $ will not be executed while $ tx_b $ can be modelled as follows:\todo{derive}
+Specifically, if we assume random witness selection, and that Alice is colluding with fraction $ f $ of all witnesses in the network, the probability that $ tx_a $ will not be executed while $ tx_b $ can be modelled as follows:
 
 \begin{equation}
 	\begin{aligned}
@@ -155,11 +156,21 @@ The probability of Alice succeeding her fraud quickly decreases: even when Alice
 We have visualized these probabilities in Figure~\ref{fig:prob_fraud_n_out_of_n_signatures}.
 As opposed to the probabilities under the $n$-out-of-$n$ threshold scheme, we now see that we can keep the probability of Alice successfully committing fraud lower when we include more witnesses in our transactions.
 
-While this scheme at a first glance might seem robust, the above scheme assumes that both traders actually generate .
+While this scheme at a first glance might seem robust, the above scheme assumes that both traders actually generate and issue their transaction.
 Without this assumption, there is a race condition here that would easily result in Alice committing fraud.
 In particular, if Bob issues his transaction $tx_b$ (without any witness signatures) in the network first, and Alice colludes with a single witness, that single witness can sign $ tx_b $ and submit it to the blockchain network for execution.
 Now, Alice refrains from sending out her transaction $tx_a$.
 In this scenario, she has successfully compromised Bobs' assets.
+
+\textbf{$t$-out-of-$n$ threshold.}
+We now consider the scenario where we require a fraction of witnesses for a transaction to be executed.
+We refer as the number of (valid) signatures required for transaction execution as $ t $ (where $ t \leq n $).
+We can model the decision of each witness to sign a particular transaction as a Bernoulli trial.
+Using a $t$-out-of-$n$ threshold scheme, this directly results in the following formula that gives the probability of Alice her attack succeeding:
+
+\begin{equation}
+	P(V(tx_a) = 0) = \mathlarger{\sum}_{i=t}^n {n \choose i} (1-f)^i f^{n-i}
+\end{equation}
 
 % Idea: witnesses should not sign without having seen both transactions
 % We can devise an accountable MPC multi-sig computation.
